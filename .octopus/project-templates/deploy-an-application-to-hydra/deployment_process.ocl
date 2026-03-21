@@ -14,7 +14,7 @@ step "deploy-container-to-hydra" {
     action {
         action_type = "Octopus.Script"
         properties = {
-            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 $name = $OctopusParameters["Octopus.Action.Package[app-container].PackageFileName"]
                 $version = $OctopusParameters["Octopus.Action.Package[app-container].PackageVersion"]
@@ -27,10 +27,11 @@ step "deploy-container-to-hydra" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = ""
+        worker_pool_variable = "#{ProjectTemplate.Worker.Pool}"
 
         packages "app-container" {
             acquisition_location = "NotAcquired"
+            feed = "octopus-server-built-in"
             package_id = ""
             properties = {
                 Extract = "False"
