@@ -25,7 +25,7 @@ step "log-deployment-end-to-apm" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = "#{Template.Worker.Pool}"
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
     }
 }
 
@@ -45,6 +45,6 @@ step "send-slack-notification" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = "#{Template.Worker.Pool}"
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
     }
 }

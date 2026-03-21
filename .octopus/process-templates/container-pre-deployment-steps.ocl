@@ -1,7 +1,7 @@
-name = "Container - Pre-deployment Checks"
+name = "Container - Pre-deployment Steps"
 description = ""
 
-parameter "Template.Worker.Pool" {
+parameter "ProcessTemplate.Worker.Pool" {
     display_settings = {
         Octopus.ControlType = "WorkerPool"
     }
@@ -25,7 +25,7 @@ step "verify-attestation" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = "#{Template.Worker.Pool}"
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
     }
 }
 
@@ -46,7 +46,7 @@ step "verify-test-results" {
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = "#{Template.Worker.Pool}"
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
     }
 }
 
@@ -61,15 +61,11 @@ step "log-deployment-start-to-apm" {
                 Write-Host "Logging deployment start to APM."
                 Start-Sleep 10s
                 Write-Host "Deployment start logged to APM."
-                
-                $version = "#{Octopus.Action.Template.Version}"
-                
-                Write-Host "Version: $version"
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
             OctopusUseBundledTooling = "False"
         }
-        worker_pool_variable = "#{Template.Worker.Pool}"
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
     }
 }
