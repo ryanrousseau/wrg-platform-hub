@@ -61,6 +61,10 @@ step "log-deployment-start-to-apm" {
                 Write-Host "Logging deployment start to APM."
                 Start-Sleep 10s
                 Write-Host "Deployment start logged to APM."
+                
+                $version = "#{Octopus.Action.Template.Version}"
+                
+                Write-Host "Version: $version"
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
