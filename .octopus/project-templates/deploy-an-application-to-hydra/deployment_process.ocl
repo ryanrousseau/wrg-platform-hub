@@ -1,0 +1,9 @@
+process_template "perform-pre-deployment-checks" {
+    name = "Perform pre-deployment checks"
+    process_template_slug = "container-pre-deployment-checks"
+    version_mask = "1.X"
+
+    parameter "Template.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+}
