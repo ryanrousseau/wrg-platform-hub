@@ -30,7 +30,7 @@ step "log-deployment-end-to-apm" {
 }
 
 step "send-slack-notification" {
-    name = "Send Slack Notification"
+    name = "Send Slack notification"
 
     action {
         action_type = "Octopus.Script"
