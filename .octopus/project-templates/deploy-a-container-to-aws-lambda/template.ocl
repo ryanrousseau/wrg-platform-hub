@@ -1,0 +1,7 @@
+name = "Deploy an Application to Hydra"
+description = ""
+
+icon {
+    color = "#016FD0"
+    id = "dragon"
+}
