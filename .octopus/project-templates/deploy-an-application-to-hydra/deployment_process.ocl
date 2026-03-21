@@ -16,7 +16,7 @@ step "deploy-container-to-hydra" {
         properties = {
             Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
-                $name = $OctopusParameters["Octopus.Action.Package[app-container].PackageFileName"]
+                $name = $OctopusParameters["Octopus.Action.Package[app-container].PackageId"]
                 $version = $OctopusParameters["Octopus.Action.Package[app-container].PackageVersion"]
                 
                 Write-Host "Deploying container $($name):$version to Hydra."
