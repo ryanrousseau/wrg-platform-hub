@@ -1,0 +1,50 @@
+name = "Container - Post-deployment Steps"
+description = ""
+
+parameter "ProcessTemplate.Worker.Pool" {
+    display_settings = {
+        Octopus.ControlType = "WorkerPool"
+    }
+    help_text = ""
+    label = "Worker Pool"
+}
+
+step "log-deployment-end-to-apm" {
+    name = "Log deployment end to APM"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                Write-Host "Logging deployment end to APM."
+                Start-Sleep 10s
+                Write-Host "Deployment end logged to APM."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{Template.Worker.Pool}"
+    }
+}
+
+step "send-slack-notification" {
+    name = "Send Slack Notification"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                Write-Host "Sending Slack notification."
+                Start-Sleep 10s
+                Write-Host "Slack notification sent."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{Template.Worker.Pool}"
+    }
+}
