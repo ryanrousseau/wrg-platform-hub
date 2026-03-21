@@ -2,6 +2,6 @@ name = "Deploy a Container to AWS Lambda"
 description = ""
 
 icon {
-    color = "#016FD0"
-    id = "dragon"
+    color = "#FF9900"
+    id = "amazon"
 }

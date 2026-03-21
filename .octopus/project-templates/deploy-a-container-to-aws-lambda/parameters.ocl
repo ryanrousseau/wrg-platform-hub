@@ -1,7 +1,15 @@
+parameter "ProjectTemplate.Container" {
+    display_settings = {
+        Octopus.ControlType = "Package"
+    }
+    help_text = ""
+    label = "Container to deploy"
+}
+
 parameter "ProjectTemplate.Worker.Pool" {
     display_settings = {
         Octopus.ControlType = "WorkerPool"
     }
-    help_text = ""
+    help_text = "Use \"Hosted Ubuntu\""
     label = "Worker Pool"
 }
