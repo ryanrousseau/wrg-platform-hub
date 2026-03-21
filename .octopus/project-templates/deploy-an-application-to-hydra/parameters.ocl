@@ -1,4 +1,4 @@
-parameter "Template.Worker.Pool" {
+parameter "ProjectTemplate.Worker.Pool" {
     display_settings = {
         Octopus.ControlType = "WorkerPool"
     }
