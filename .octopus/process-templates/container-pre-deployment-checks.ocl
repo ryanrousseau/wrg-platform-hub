@@ -1,4 +1,4 @@
-name = "Container - Pre Deployment Checks"
+name = "Container - Pre-deployment Checks"
 description = ""
 
 parameter "Template.Worker.Pool" {
