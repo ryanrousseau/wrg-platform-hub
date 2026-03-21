@@ -1,4 +1,4 @@
-name = "Deploy an Application to Hydra"
+name = "Deploy a Container to AWS Lambda"
 description = ""
 
 icon {

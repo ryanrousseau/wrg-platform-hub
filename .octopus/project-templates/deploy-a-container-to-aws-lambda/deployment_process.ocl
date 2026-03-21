@@ -8,6 +8,39 @@ process_template "perform-pre-deployment-steps" {
     }
 }
 
+step "deploy-container-to-aws-lambda" {
+    name = "Deploy container to AWS Lambda"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                $name = $OctopusParameters["Octopus.Action.Package[app-container].PackageId"]
+                $version = $OctopusParameters["Octopus.Action.Package[app-container].PackageVersion"]
+                
+                Write-Host "Deploying container $($name):$version to AWS Lambda."
+                Start-Sleep 10s
+                Write-Host "Deployment complete."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{ProjectTemplate.Worker.Pool}"
+
+        packages "app-container" {
+            acquisition_location = "NotAcquired"
+            feed = "octopus-server-built-in"
+            package_id = ""
+            properties = {
+                Extract = "False"
+                PackageParameterName = "ProjectTemplate.Container"
+                SelectionMode = "deferred"
+            }
+        }
+    }
+}
 
 process_template "perform-post-deployment-steps" {
     name = "Perform post-deployment steps"
