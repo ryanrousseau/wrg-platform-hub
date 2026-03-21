@@ -2,6 +2,6 @@ name = "Deploy an Application to Hydra"
 description = ""
 
 icon {
-    color = "#757575"
-    id = "layer-group"
+    color = "#557999"
+    id = "dragon"
 }
