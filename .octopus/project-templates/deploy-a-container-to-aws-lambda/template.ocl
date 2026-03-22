@@ -3,5 +3,5 @@ description = ""
 
 icon {
     color = "#FF9900"
-    id = "amazon"
+    id = "aws"
 }
