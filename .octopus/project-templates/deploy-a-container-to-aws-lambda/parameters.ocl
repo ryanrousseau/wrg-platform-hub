@@ -13,3 +13,19 @@ parameter "ProjectTemplate.Worker.Pool" {
     help_text = "Use \"Hosted Ubuntu\""
     label = "Worker Pool"
 }
+
+parameter "ProjectTemplate.Environments.Production" {
+    display_settings = {
+        Octopus.ControlType = "Environments"
+    }
+    help_text = ""
+    label = "Production Environment(s)"
+}
+
+parameter "ProjectTemplate.Worker.Feed" {
+    display_settings = {
+        Octopus.ControlType = "Feed"
+    }
+    help_text = "Choose \"Docker Hub\""
+    label = "Container Feed"
+}
