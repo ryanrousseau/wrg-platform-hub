@@ -38,7 +38,7 @@ process_template "deploy-a-container-to-aws-lambda" {
     }
 
     parameter "ProcessTemplate.Lambda.FunctionRole" {
-        value = "Test"
+        value = "arn:aws:iam::381713788115:role/demo-worker-lambda-execution"
     }
 }
 
