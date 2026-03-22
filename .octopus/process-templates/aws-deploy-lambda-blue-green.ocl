@@ -755,7 +755,7 @@ step "set-inactive-alias-to-new-version-for-testing" {
     action {
         action_type = "Octopus.AwsRunScript"
         properties = {
-            AWS.Lambda.Account = "ProcessTemplate.AWS.Account"
+            AWS.Lambda.Account = "#{ProcessTemplate.AWS.Account}"
             AWS.Lambda.Alias.FunctionVersion = "#{Octopus.ProcessTemplate.Action[Deploy app].Output.PublishedVersion}"
             AWS.Lambda.Alias.Name = "inactive"
             AWS.Lambda.Alias.Percent = "100"
@@ -1131,7 +1131,7 @@ step "set-active-alias-to-new-version" {
     action {
         action_type = "Octopus.AwsRunScript"
         properties = {
-            AWS.Lambda.Account = "ProcessTemplate.AWS.Account"
+            AWS.Lambda.Account = "#{ProcessTemplate.AWS.Account}"
             AWS.Lambda.Alias.FunctionVersion = "#{Octopus.ProcessTemplate.Action[Deploy app].Output.PublishedVersion}"
             AWS.Lambda.Alias.Name = "active"
             AWS.Lambda.Alias.Percent = "100"
@@ -1420,7 +1420,7 @@ step "aws-configure-lambda-alias" {
     action "set-inactive-alias-to-previous-version" {
         action_type = "Octopus.AwsRunScript"
         properties = {
-            AWS.Lambda.Account = "ProcessTemplate.AWS.Account"
+            AWS.Lambda.Account = "#{ProcessTemplate.AWS.Account}"
             AWS.Lambda.Alias.FunctionVersion = "#{Octopus.ProcessTemplate.Action[Get active version].Output.ActiveVersion}"
             AWS.Lambda.Alias.Name = "inactive"
             AWS.Lambda.Alias.Percent = "100"
