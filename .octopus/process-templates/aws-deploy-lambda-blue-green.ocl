@@ -138,7 +138,7 @@ step "deploy-app" {
             AWS.Lambda.FunctionRole = "#{ProcessTemplate.Lambda.FunctionRole}"
             AWS.Lambda.FunctionTimeout = "15"
             AWS.Lambda.MemorySize = "128"
-            AWS.Lambda.Package = "#{ProcessTemplate.Package}"
+            AWS.Lambda.Package = "ProcessTemplate.Package"
             AWS.Lambda.Publish = "Yes"
             AWS.Lambda.Region = "#{ProcessTemplate.AWS.Region}"
             Octopus.Action.Aws.AssumeRole = "False"
