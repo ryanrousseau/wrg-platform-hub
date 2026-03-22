@@ -731,8 +731,8 @@ step "deploy-app" {
         }
 
         container {
-            feed = "#{Template.Octopus.WorkerFeed}"
-            image = "#{Template.Octopus.WorkerImage}"
+            feed = "#{ProcessTemplate.Octopus.WorkerFeed}"
+            image = "#{ProcessTemplate.Octopus.WorkerImage}"
         }
 
         packages "AWS.Lambda.Package" {
