@@ -1,3 +1,7 @@
+variable "ProjectTemplate.Lambda.Name" {
+    value "#{Octopus.Project.Slug}-#{Octopus.Environment.Name}" {}
+}
+
 variable "ProjectTemplate.AWS.Account" {
     type = "AmazonWebServicesAccount"
 
