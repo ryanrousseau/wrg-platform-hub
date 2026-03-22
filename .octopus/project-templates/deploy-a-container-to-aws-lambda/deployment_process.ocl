@@ -8,6 +8,40 @@ process_template "perform-pre-deployment-steps" {
     }
 }
 
+process_template "deploy-a-container-to-aws-lambda" {
+    name = "Deploy a container to AWS Lambda"
+    process_template_slug = "aws-deploy-lambda-blue-green"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.AWS.Account" {
+        value = "#{ProjectTemplate.AWS.Account}"
+    }
+
+    parameter "ProcessTemplate.Octopus.WorkerPool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+
+    parameter "ProcessTemplate.Octopus.WorkerFeed" {
+        value = "#{ProjectTemplate.Worker.Feed}"
+    }
+
+    parameter "ProcessTemplate.Lambda.Name" {
+        value = "#{ProjectTemplate.Lambda.Name}"
+    }
+
+    parameter "ProcessTemplate.Package" {
+        value = "ProjectTemplate.Container"
+    }
+
+    parameter "ProcessTemplate.Environments.Production" {
+        value = "#{ProjectTemplate.Environments.Production}"
+    }
+
+    parameter "ProcessTemplate.Lambda.FunctionRole" {
+        value = "Test"
+    }
+}
+
 process_template "perform-post-deployment-steps" {
     name = "Perform post-deployment steps"
     process_template_slug = "container-post-deployment-steps"
