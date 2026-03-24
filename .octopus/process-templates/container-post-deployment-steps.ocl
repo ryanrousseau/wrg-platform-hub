@@ -2,8 +2,8 @@ name = "Container - Post-deployment Steps"
 description = ""
 
 icon {
-    color = "#927002"
-    id = "vial"
+    color = "#00874D"
+    id = "bell-exclamation"
 }
 
 parameter "ProcessTemplate.Worker.Pool" {
