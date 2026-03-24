@@ -8,6 +8,77 @@ process_template "perform-pre-deployment-steps" {
     }
 }
 
+step "deploy-kubernetes-yaml" {
+    name = "Deploy Kubernetes YAML"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProjectTemplate.Target.Tags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: #{Octopus.Project.Slug}-deployment
+                spec:
+                  replicas: 1
+                  selector:
+                    matchLabels:
+                      component: #{Octopus.Project.Slug}-service
+                  template:
+                    metadata:
+                      labels:
+                        component: #{Octopus.Project.Slug}-service
+                        release: #{Octopus.Release.Number}
+                    spec:
+                      containers:
+                        - name: #{Octopus.Project.Slug}
+                          image: #{Project.Application.Image}
+                          ports:
+                            - name: http-route
+                              containerPort: 80
+                          env:
+                            - name: DATABASE_SERVER
+                              value: "#{Project.Database.Server}"
+                            - name: DATABASE_NAME
+                              value: "#{Project.Database.Name}"
+                ---
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: #{Octopus.Project.Slug}-service
+                spec:
+                  type: ClusterIP
+                  selector:
+                    component: #{Octopus.Project.Slug}-service
+                  ports:
+                    - port: 80
+                      targetPort: 80
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProjectTemplate.Kubernetes.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
+
+        packages "app-container" {
+            acquisition_location = "NotAcquired"
+            package_id = ""
+            properties = {
+                Extract = "false"
+                PackageParameterName = "ProjectTemplate.Container"
+                Purpose = "DockerImageReference"
+                SelectionMode = "deferred"
+            }
+        }
+    }
+}
+
 process_template "perform-post-deployment-steps" {
     name = "Perform post-deployment steps"
     process_template_slug = "container-post-deployment-steps"
