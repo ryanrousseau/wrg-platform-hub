@@ -1,0 +1,59 @@
+process_template "perform-pre-deployment-steps" {
+    name = "Perform pre-deployment steps"
+    process_template_slug = "container-pre-deployment-steps"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+}
+
+step "deploy-java-web-app" {
+    name = "Deploy Java web app"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT                
+                Write-Host "Deploying app #{Octopus.Project.Slug} version #{Octopus.Release.Number}."
+                Start-Sleep 10s
+                Write-Host "Deployment complete."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{ProjectTemplate.Worker.Pool}"
+    }
+}
+
+step "deploy-database-migrations" {
+    name = "Deploy database migrations"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT                
+                Write-Host "Applying database migrations."
+                Start-Sleep 10s
+                Write-Host "Database migrations complete."
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{ProjectTemplate.Worker.Pool}"
+    }
+}
+
+process_template "perform-post-deployment-steps" {
+    name = "Perform post-deployment steps"
+    process_template_slug = "container-post-deployment-steps"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+}

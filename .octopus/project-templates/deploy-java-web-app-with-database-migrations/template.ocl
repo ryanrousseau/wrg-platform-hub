@@ -1,0 +1,7 @@
+name = "Deploy Java Web App with Database Migrations"
+description = ""
+
+icon {
+    color = "#016FD0"
+    id = "java"
+}
