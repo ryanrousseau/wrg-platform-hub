@@ -1,4 +1,4 @@
-name = "Deploy a Container to AWS Lambda"
+name = "Deploy a Container to AWS Lambda using Blue-Green"
 description = "Deploys to AWS Lambda using a Blue-Green deployment pattern."
 
 icon {
