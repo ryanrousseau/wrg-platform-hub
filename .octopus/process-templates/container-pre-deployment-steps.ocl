@@ -1,6 +1,11 @@
 name = "Container - Pre-deployment Steps"
 description = ""
 
+icon {
+    color = "#927002"
+    id = "vial"
+}
+
 parameter "ProcessTemplate.Worker.Pool" {
     display_settings = {
         Octopus.ControlType = "WorkerPool"
