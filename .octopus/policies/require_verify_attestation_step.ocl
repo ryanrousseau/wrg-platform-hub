@@ -1,6 +1,6 @@
-name = "Require verify attestation step to be included and not skipped in a deployment"
+name = "Require pre-deployment steps to be included and not skipped in a deployment"
 description = "This policy checks that an attestation verification step isn't skipped"
-violation_reason = "Attestation verification step is required to deploy"
+violation_reason = "Pre-deployment steps are required to deploy"
 
 conditions {
     rego = <<-EOT
@@ -8,19 +8,19 @@ conditions {
                 default result := {"allowed": false}
             
                 result := {"allowed": true} if {
-                    startswith(input.Steps[0].Source.SlugOrId, "github-verify-attestations")
+                    startswith(input.Steps[0].Source.SlugOrId, "container-pre-deployment-steps")
                     input.Steps[0].Enabled == true
                     not verify_build_artifacts_skipped
                 }
             
-                result := {"allowed": false, "Reason": "Artifact verification and attestation is required and cannot be skipped."} if {
+                result := {"allowed": false, "Reason": "Pre-deployment steps are required and cannot be skipped."} if {
                     verify_build_artifacts_skipped
                 }
             
                 verify_build_artifacts_skipped if {
                     some step in input.Steps
                     step.Id in input.SkippedSteps
-                    startswith(step.Source.SlugOrId, "github-verify-attestations")
+                    startswith(step.Source.SlugOrId, "container-pre-deployment-steps")
                 }
             EOT
 }
