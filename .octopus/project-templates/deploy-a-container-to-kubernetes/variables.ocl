@@ -1,0 +1,15 @@
+variable "Project.Database.Server" {
+    value "nci-postgres-server-#{Octopus.Environment.Slug}" {}
+}
+
+variable "Project.Database.Name" {
+    value "#{Octopus.Project.Slug}-db" {}
+}
+
+variable "Project.Application.Image" {
+    value "#{Octopus.Action.Package[app-container].Image}" {}
+}
+
+variable "ProjectTemplate.Kubernetes.Namespace" {
+    value "nci-#{Octopus.Project.Slug}-#{Octopus.Environment.Slug}" {}
+}
