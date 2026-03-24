@@ -2,6 +2,6 @@ name = "Deploy a Container to Kubernetes"
 description = ""
 
 icon {
-    color = "#016FD0"
-    id = "dragon"
+    color = "#1A77CA"
+    id = "ship"
 }
