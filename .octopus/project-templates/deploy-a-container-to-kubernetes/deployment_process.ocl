@@ -1,0 +1,19 @@
+process_template "perform-pre-deployment-steps" {
+    name = "Perform pre-deployment steps"
+    process_template_slug = "container-pre-deployment-steps"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+}
+
+process_template "perform-post-deployment-steps" {
+    name = "Perform post-deployment steps"
+    process_template_slug = "container-post-deployment-steps"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+}

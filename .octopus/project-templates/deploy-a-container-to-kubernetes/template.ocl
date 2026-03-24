@@ -1,0 +1,7 @@
+name = "Deploy a Container to Kubernetes"
+description = ""
+
+icon {
+    color = "#016FD0"
+    id = "dragon"
+}
