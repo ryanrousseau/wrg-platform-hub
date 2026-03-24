@@ -6,6 +6,14 @@ parameter "ProjectTemplate.Container" {
     label = "Container to deploy"
 }
 
+parameter "ProjectTemplate.Target.Tags" {
+    display_settings = {
+        Octopus.ControlType = "TargetTags"
+    }
+    help_text = ""
+    label = "Target Tag(s)"
+}
+
 parameter "ProjectTemplate.Worker.Pool" {
     display_settings = {
         Octopus.ControlType = "WorkerPool"
