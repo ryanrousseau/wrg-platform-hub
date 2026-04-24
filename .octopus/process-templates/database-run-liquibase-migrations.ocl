@@ -1,2 +1,7 @@
 name = "Database - Run Liquibase Migrations"
 description = ""
+
+icon {
+    color = "#1A77CA"
+    id = "database"
+}
