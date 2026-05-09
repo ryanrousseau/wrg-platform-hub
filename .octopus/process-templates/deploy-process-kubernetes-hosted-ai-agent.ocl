@@ -1,2 +1,235 @@
 name = "Deploy Process - Kubernetes Hosted AI Agent"
 description = ""
+
+parameter "ProcessTemplate.TargetTags" {
+    display_settings = {
+        Octopus.ControlType = "TargetTags"
+    }
+    help_text = ""
+    label = "Target Tags"
+}
+
+parameter "ProcessTemplate.Agent.Slug" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Agent Slug"
+
+    value "#{Octopus.Project.Slug}" {}
+}
+
+parameter "ProcessTemplate.Environment.Slug" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Environment Slug"
+
+    value "#{Octopus.Environment.Slug}" {}
+}
+
+parameter "ProcessTemplate.Vault.Url" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Key Vault URL"
+
+    value "https://demo-octopus-app.vault.azure.net/" {}
+}
+
+parameter "ProcessTemplate.Agent.Container" {
+    display_settings = {
+        Octopus.ControlType = "Package"
+    }
+    help_text = ""
+    label = "Agent Container"
+}
+
+parameter "ProcessTemplate.Agent.Namespace" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Agent Namespace"
+
+    value "#{ProcessTemplate.Agent.Slug}-#{ProcessTemplate.Environment.Slug}" {}
+}
+
+step "deploy-configmap" {
+    name = "Deploy configmap"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: #{ProcessTemplate.Agent.Slug}-config
+                data:
+                  USE_KEY_VAULT: "true"
+                  AZURE_KEY_VAULT_URL: #{ProcessTemplate.Vault.Url}
+                  LOG_LEVEL: "INFO"
+                  PYTHONUNBUFFERED: "1"
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
+    }
+}
+
+step "deploy-service-account" {
+    name = "Deploy service account"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: v1
+                kind: ServiceAccount
+                metadata:
+                  name: #{ProcessTemplate.Agent.Slug}
+                  annotations:
+                    # Link to Azure AD app/managed identity
+                    azure.workload.identity/client-id: "0007c11d-6e78-4061-a512-baf8861a6552 "
+                  labels:
+                    azure.workload.identity/use: "true"
+                automountServiceAccountToken: false
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
+    }
+}
+
+step "create-deployment" {
+    name = "Create deployment"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: #{ProcessTemplate.Agent.Slug}
+                spec:
+                  replicas: 1
+                  selector:
+                    matchLabels:
+                      app: #{ProcessTemplate.Agent.Slug}
+                  template:
+                    metadata:
+                      labels:
+                        app: #{ProcessTemplate.Agent.Slug}
+                        azure.workload.identity/use: "true"  # ← REQUIRED for workload identity
+                    spec:
+                      serviceAccountName: #{ProcessTemplate.Agent.Slug}
+                      
+                      securityContext:
+                        runAsNonRoot: true
+                        runAsUser: 1000
+                        fsGroup: 1000
+                      
+                      containers:
+                        - name: #{ProcessTemplate.Agent.Slug}
+                          image: #{Octopus.Action.Package[agent-container].Image}
+                          ports:
+                            - name: http
+                              containerPort: 8000
+                          
+                          envFrom:
+                            - configMapRef:
+                                name: #{ProcessTemplate.Agent.Slug}-config
+                          
+                          # Workload Identity injects these automatically:
+                          #   AZURE_CLIENT_ID, AZURE_TENANT_ID,
+                          #   AZURE_FEDERATED_TOKEN_FILE, AZURE_AUTHORITY_HOST
+                          
+                          resources:
+                            requests:
+                              cpu: "100m"
+                              memory: "256Mi"
+                            limits:
+                              cpu: "500m"
+                              memory: "512Mi"
+                          
+                          livenessProbe:
+                            httpGet:
+                              path: /health
+                              port: http
+                            initialDelaySeconds: 15
+                            periodSeconds: 20
+                          
+                          readinessProbe:
+                            httpGet:
+                              path: /ready
+                              port: http
+                            initialDelaySeconds: 10
+                            periodSeconds: 10
+                          
+                          startupProbe:
+                            httpGet:
+                              path: /health
+                              port: http
+                            periodSeconds: 5
+                            failureThreshold: 18  # Allow 90s for KV auth on first start
+                          
+                          securityContext:
+                            allowPrivilegeEscalation: false
+                            readOnlyRootFilesystem: true
+                            capabilities:
+                              drop:
+                                - ALL
+                          
+                          volumeMounts:
+                            - name: tmp
+                              mountPath: /tmp
+                      
+                      volumes:
+                        - name: tmp
+                          emptyDir:
+                            sizeLimit: 100Mi
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
+
+        packages "agent-container" {
+            acquisition_location = "NotAcquired"
+            package_id = ""
+            properties = {
+                Extract = "false"
+                PackageParameterName = "ProcessTemplate.Agent.Container"
+                Purpose = "DockerImageReference"
+                SelectionMode = "deferred"
+            }
+        }
+    }
+}
