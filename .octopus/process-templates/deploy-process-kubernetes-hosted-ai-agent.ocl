@@ -57,6 +57,82 @@ parameter "ProcessTemplate.Agent.Namespace" {
     value "#{ProcessTemplate.Agent.Slug}-#{ProcessTemplate.Environment.Slug}" {}
 }
 
+step "deploy-redis" {
+    name = "Deploy redis"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                ---
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: redis
+                spec:
+                  replicas: 1
+                  selector:
+                    matchLabels:
+                      app: redis
+                  template:
+                    metadata:
+                      labels:
+                        app: redis
+                    spec:
+                      containers:
+                        - name: redis
+                          image: redis:7-alpine
+                          args:
+                            - "--maxmemory"
+                            - "256mb"
+                            - "--maxmemory-policy"
+                            - "allkeys-lru"
+                          ports:
+                            - name: redis
+                              containerPort: 6379
+                          resources:
+                            requests:
+                              cpu: "50m"
+                              memory: "128Mi"
+                            limits:
+                              cpu: "200m"
+                              memory: "320Mi"
+                          livenessProbe:
+                            tcpSocket:
+                              port: redis
+                            periodSeconds: 10
+                          readinessProbe:
+                            exec:
+                              command: ["redis-cli", "ping"]
+                            periodSeconds: 5
+                ---
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: redis
+                spec:
+                  type: ClusterIP
+                  selector:
+                    app: redis
+                  ports:
+                    - name: redis
+                      port: 6379
+                      targetPort: redis
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
+    }
+}
+
 step "deploy-configmap" {
     name = "Deploy configmap"
     properties = {
@@ -76,10 +152,21 @@ step "deploy-configmap" {
                 metadata:
                   name: #{ProcessTemplate.Agent.Slug}-config
                 data:
+                data:
                   USE_KEY_VAULT: "true"
-                  AZURE_KEY_VAULT_URL: #{ProcessTemplate.Vault.Url}
+                  AZURE_KEY_VAULT_URL: "https://my-weather-vault.vault.azure.net"
                   LOG_LEVEL: "INFO"
-                  PYTHONUNBUFFERED: "1"
+                  
+                  # Caching
+                  CACHE_BACKEND: "redis"
+                  REDIS_URL: "redis://redis.#{ProcessTemplate.Agent.Namespace}.svc.cluster.local:6379/0"
+                  CACHE_TTL_GEOCODING: "86400"
+                  CACHE_TTL_CURRENT_WEATHER: "600"
+                  CACHE_TTL_FORECAST: "1800"
+                  CACHE_TTL_AGENT_RESPONSE: "300"
+                  ENABLE_TOOL_CACHE: "true"
+                  ENABLE_RESPONSE_CACHE: "true"
+                
                 EOT
             Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
             Octopus.Action.Script.ScriptSource = "Inline"
@@ -112,48 +199,6 @@ step "deploy-service-account" {
                   labels:
                     azure.workload.identity/use: "true"
                 automountServiceAccountToken: false
-                EOT
-            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
-            Octopus.Action.Script.ScriptSource = "Inline"
-        }
-        worker_pool_variable = ""
-    }
-}
-
-step "create-service" {
-    name = "Create service"
-    properties = {
-        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
-    }
-
-    action {
-        action_type = "Octopus.KubernetesDeployRawYaml"
-        properties = {
-            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
-            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
-            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
-            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
-            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
-                apiVersion: v1
-                kind: Service
-                metadata:
-                  name: #{ProcessTemplate.Agent.Slug}
-                  labels:
-                    app: #{ProcessTemplate.Agent.Slug}
-                    app.kubernetes.io/name: #{ProcessTemplate.Agent.Slug}
-                    app.kubernetes.io/component: api
-                  annotations:
-                    description: "Internal ClusterIP service for the weather agent API"
-                spec:
-                  type: ClusterIP
-                  selector:
-                    app: #{ProcessTemplate.Agent.Slug}
-                  ports:
-                    - name: http
-                      port: 8000              # Service port (what clients hit)
-                      targetPort: http      # Named port on the pod (8000)
-                      protocol: TCP
-                  sessionAffinity: None     # Use 'ClientIP' if you need sticky sessions
                 EOT
             Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
             Octopus.Action.Script.ScriptSource = "Inline"
@@ -274,5 +319,47 @@ step "create-deployment" {
                 SelectionMode = "deferred"
             }
         }
+    }
+}
+
+step "create-service" {
+    name = "Create service"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: #{ProcessTemplate.Agent.Slug}
+                  labels:
+                    app: #{ProcessTemplate.Agent.Slug}
+                    app.kubernetes.io/name: #{ProcessTemplate.Agent.Slug}
+                    app.kubernetes.io/component: api
+                  annotations:
+                    description: "Internal ClusterIP service for the weather agent API"
+                spec:
+                  type: ClusterIP
+                  selector:
+                    app: #{ProcessTemplate.Agent.Slug}
+                  ports:
+                    - name: http
+                      port: 8000              # Service port (what clients hit)
+                      targetPort: http      # Named port on the pod (8000)
+                      protocol: TCP
+                  sessionAffinity: None     # Use 'ClientIP' if you need sticky sessions
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
     }
 }
