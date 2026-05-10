@@ -223,6 +223,7 @@ step "create-deployment" {
 
         packages "agent-container" {
             acquisition_location = "NotAcquired"
+            feed = "octopus-server-built-in"
             package_id = ""
             properties = {
                 Extract = "false"
@@ -231,5 +232,47 @@ step "create-deployment" {
                 SelectionMode = "deferred"
             }
         }
+    }
+}
+
+step "create-service" {
+    name = "Create service"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
+    }
+
+    action {
+        action_type = "Octopus.KubernetesDeployRawYaml"
+        properties = {
+            Octopus.Action.Kubernetes.DeploymentTimeout = "180"
+            Octopus.Action.Kubernetes.ResourceStatusCheck = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.Enabled = "True"
+            Octopus.Action.Kubernetes.ServerSideApply.ForceConflicts = "True"
+            Octopus.Action.KubernetesContainers.CustomResourceYaml = <<-EOT
+                apiVersion: v1
+                kind: Service
+                metadata:
+                  name: #{ProcessTemplate.Agent.Slug}
+                  labels:
+                    app: #{ProcessTemplate.Agent.Slug}
+                    app.kubernetes.io/name: #{ProcessTemplate.Agent.Slug}
+                    app.kubernetes.io/component: api
+                  annotations:
+                    description: "Internal ClusterIP service for the weather agent API"
+                spec:
+                  type: ClusterIP
+                  selector:
+                    app: #{ProcessTemplate.Agent.Slug}
+                  ports:
+                    - name: http
+                      port: 80              # Service port (what clients hit)
+                      targetPort: http      # Named port on the pod (8000)
+                      protocol: TCP
+                  sessionAffinity: None     # Use 'ClientIP' if you need sticky sessions
+                EOT
+            Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
+            Octopus.Action.Script.ScriptSource = "Inline"
+        }
+        worker_pool_variable = ""
     }
 }
