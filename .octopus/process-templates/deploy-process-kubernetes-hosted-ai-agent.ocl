@@ -195,7 +195,7 @@ step "deploy-service-account" {
                   name: #{ProcessTemplate.Agent.Slug}
                   annotations:
                     # Link to Azure AD app/managed identity
-                    azure.workload.identity/client-id: "0007c11d-6e78-4061-a512-baf8861a6552 "
+                    azure.workload.identity/client-id: "0007c11d-6e78-4061-a512-baf8861a6552"
                   labels:
                     azure.workload.identity/use: "true"
                 automountServiceAccountToken: false
