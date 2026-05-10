@@ -150,7 +150,7 @@ step "create-service" {
                     app: #{ProcessTemplate.Agent.Slug}
                   ports:
                     - name: http
-                      port: 80              # Service port (what clients hit)
+                      port: 8000              # Service port (what clients hit)
                       targetPort: http      # Named port on the pod (8000)
                       protocol: TCP
                   sessionAffinity: None     # Use 'ClientIP' if you need sticky sessions
