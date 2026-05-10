@@ -154,7 +154,7 @@ step "deploy-configmap" {
                 data:
                 data:
                   USE_KEY_VAULT: "true"
-                  AZURE_KEY_VAULT_URL: "https://my-weather-vault.vault.azure.net"
+                  AZURE_KEY_VAULT_URL: "https://demo-octopus-app.vault.azure.net/"
                   LOG_LEVEL: "INFO"
                   
                   # Caching
