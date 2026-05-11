@@ -208,12 +208,12 @@ step "deploy-service-account" {
 }
 
 step "create-deployment" {
-    name = "Create deployment"
+    name = "Deploy agent"
     properties = {
         Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
     }
 
-    action {
+    action "deploy-agent" {
         action_type = "Octopus.KubernetesDeployRawYaml"
         properties = {
             Octopus.Action.Kubernetes.DeploymentTimeout = "180"
@@ -271,7 +271,7 @@ step "create-deployment" {
                               path: /health
                               port: http
                             initialDelaySeconds: 15
-                            periodSeconds: 20
+                            periodSeconds: 60
                           
                           readinessProbe:
                             httpGet:
@@ -323,12 +323,12 @@ step "create-deployment" {
 }
 
 step "create-service" {
-    name = "Create service"
+    name = "Deploy service"
     properties = {
         Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
     }
 
-    action {
+    action "deploy-service" {
         action_type = "Octopus.KubernetesDeployRawYaml"
         properties = {
             Octopus.Action.Kubernetes.DeploymentTimeout = "180"
