@@ -1,0 +1,13 @@
+process_template "deploy-the-agent" {
+    name = "Deploy the agent"
+    process_template_slug = "deploy-process-kubernetes-hosted-ai-agent"
+    version_mask = "1.X"
+
+    parameter "ProcessTemplate.TargetTags" {
+        value = "#{ProjectTemplate.TargetTags}"
+    }
+
+    parameter "ProcessTemplate.Agent.Container" {
+        value = "ProjectTemplate.Agent.Container"
+    }
+}
