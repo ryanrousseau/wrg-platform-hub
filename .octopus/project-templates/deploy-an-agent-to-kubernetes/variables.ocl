@@ -1,0 +1,3 @@
+variable "ProjectTemplate.Kubernetes.Namespace" {
+    value "#{Octopus.Project.Slug}-#{Octopus.Environment.Slug}" {}
+}
