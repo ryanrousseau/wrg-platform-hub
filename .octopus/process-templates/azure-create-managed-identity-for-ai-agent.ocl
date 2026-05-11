@@ -62,7 +62,7 @@ step "create-managed-identity" {
                 
                 export RESOURCE_GROUP=demo.octopus.app
                 export CLUSTER=demo-octopus-app-aks-main
-                export APP_CONFIG_NAME=demo-octopus-app
+                export APPCONFIG_NAME=demo-octopus-app
                 export KEY_VAULT_NAME=demo-octopus-app
                 export IDENTITY_NAME=$(get_octopusvariable "ProcessTemplate.Azure.IdentityName")
                 export LOCATION=westus2
