@@ -1,0 +1,15 @@
+parameter "ProjectTemplate.TargetTags" {
+    display_settings = {
+        Octopus.ControlType = "TargetTags"
+    }
+    help_text = ""
+    label = "Target Tags"
+}
+
+parameter "ProjectTemplate.Agent.Container" {
+    display_settings = {
+        Octopus.ControlType = "Package"
+    }
+    help_text = ""
+    label = "Agent Container"
+}
