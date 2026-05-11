@@ -2,6 +2,6 @@ name = "Deploy an Agent to Kubernetes"
 description = ""
 
 icon {
-    color = "#757575"
-    id = "layer-group"
+    color = "#895ED3"
+    id = "brain"
 }
