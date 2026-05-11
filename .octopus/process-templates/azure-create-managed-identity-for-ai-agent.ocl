@@ -64,9 +64,9 @@ step "create-managed-identity" {
                 export CLUSTER=demo-octopus-app-aks-main
                 export APP_CONFIG_NAME=demo-octopus-app
                 export KEY_VAULT_NAME=demo-octopus-app
-                export IDENTITY_NAME=$OctopusParameters["ProcessTemplate.Azure.IdentityName"]
+                export IDENTITY_NAME=$(get_octopusvariable "ProcessTemplate.Azure.IdentityName")
                 export LOCATION=westus2
-                export NAMESPACE=$OctopusParameters["ProcessTemplate.Kubernetes.Namespace"]
+                export NAMESPACE=$(get_octopusvariable "ProcessTemplate.Kubernetes.Namespace")
                 
                 #az aks update \
                 #  --resource-group $RESOURCE_GROUP \
