@@ -57,6 +57,24 @@ parameter "ProcessTemplate.Agent.Namespace" {
     value "#{ProcessTemplate.Agent.Slug}-#{ProcessTemplate.Environment.Slug}" {}
 }
 
+parameter "ProcessTemplate.AppConfiguration.Endpoint" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "App Configuration Endpoint"
+
+    value "https://demo-octopus-app.azconfig.io" {}
+}
+
+parameter "ProcessTemplate.ServiceAccount.ClientId" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Managed Service Account Client ID"
+}
+
 step "deploy-redis" {
     name = "Deploy redis"
     properties = {
@@ -154,7 +172,7 @@ step "deploy-configmap" {
                 data:
                 data:
                   USE_KEY_VAULT: "true"
-                  AZURE_KEY_VAULT_URL: "https://demo-octopus-app.vault.azure.net/"
+                  AZURE_KEY_VAULT_URL: "#{ProcessTemplate.Vault.Url}"
                   LOG_LEVEL: "INFO"
                   
                   # Caching
@@ -195,7 +213,7 @@ step "deploy-service-account" {
                   name: #{ProcessTemplate.Agent.Slug}
                   annotations:
                     # Link to Azure AD app/managed identity
-                    azure.workload.identity/client-id: "0007c11d-6e78-4061-a512-baf8861a6552"
+                    azure.workload.identity/client-id: "#{ProcessTemplate.ServiceAccount.ClientId}"
                   labels:
                     azure.workload.identity/use: "true"
                 automountServiceAccountToken: false
