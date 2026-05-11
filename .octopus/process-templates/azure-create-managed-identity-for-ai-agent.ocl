@@ -19,16 +19,6 @@ parameter "ProcessTemplate.Azure.Account" {
     value "demo-octopus-app-platform-hub" {}
 }
 
-parameter "ProcessTemplate.Azure.IdentityName" {
-    display_settings = {
-        Octopus.ControlType = "MultiLineText"
-    }
-    help_text = ""
-    label = "Azure Identity Name"
-
-    value "#{Octopus.Project.Slug}-#{Octopus.Environment.Slug}-identity" {}
-}
-
 parameter "ProcessTemplate.Kubernetes.Namespace" {
     display_settings = {
         Octopus.ControlType = "SingleLineText"
@@ -45,6 +35,16 @@ parameter "ProcessTemplate.Kubernetes.ServiceAccount" {
     }
     help_text = ""
     label = "Service Account"
+
+    value "#{Octopus.Space.Slug}" {}
+}
+
+parameter "ProcessTemplate.Azure.IdentityName" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Identity Name"
 
     value "#{Octopus.Space.Slug}" {}
 }
@@ -67,7 +67,6 @@ step "create-managed-identity" {
                 export IDENTITY_NAME=$OctopusParameters["ProcessTemplate.Azure.IdentityName"]
                 export LOCATION=westus2
                 export NAMESPACE=$OctopusParameters["ProcessTemplate.Kubernetes.Namespace"]
-                export SERVICE_ACCOUNT=$OctopusParameters["ProcessTemplate.Kubernetes.ServiceAccount"]
                 
                 #az aks update \
                 #  --resource-group $RESOURCE_GROUP \
@@ -130,7 +129,7 @@ step "create-managed-identity" {
                   --identity-name $IDENTITY_NAME \
                   --resource-group $RESOURCE_GROUP \
                   --issuer $OIDC_ISSUER \
-                  --subject "system:serviceaccount:${NAMESPACE}:${SERVICE_ACCOUNT}" \
+                  --subject "system:serviceaccount:${NAMESPACE}:${IDENTITY_NAME}" \
                   --audiences "api://AzureADTokenExchange"
                 
                 echo "✅ Use this Client ID in your ServiceAccount annotation: $CLIENT_ID"
