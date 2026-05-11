@@ -1,2 +1,145 @@
 name = "Azure - Create managed identity for AI agent"
 description = ""
+
+parameter "ProcessTemplate.Worker.Pool" {
+    display_settings = {
+        Octopus.ControlType = "WorkerPool"
+    }
+    help_text = ""
+    label = "Worker Pool"
+}
+
+parameter "ProcessTemplate.Azure.Account" {
+    display_settings = {
+        Octopus.ControlType = "AzureAccount"
+    }
+    help_text = ""
+    label = "Azure Account"
+
+    value "demo-octopus-app-platform-hub" {}
+}
+
+parameter "ProcessTemplate.Azure.IdentityName" {
+    display_settings = {
+        Octopus.ControlType = "MultiLineText"
+    }
+    help_text = ""
+    label = "Azure Identity Name"
+
+    value "#{Octopus.Project.Slug}-#{Octopus.Environment.Slug}-identity" {}
+}
+
+parameter "ProcessTemplate.Kubernetes.Namespace" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Namespace"
+
+    value "#{Octopus.Project.Slug}-#{Octopus.Environment.Slug}" {}
+}
+
+parameter "ProcessTemplate.Kubernetes.ServiceAccount" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Service Account"
+
+    value "#{Octopus.Space.Slug}" {}
+}
+
+step "create-managed-identity" {
+    name = "Create managed identity"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{ProcessTemplate.Azure.Account}"
+            Octopus.Action.RunOnServer = "true"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                # Enable OIDC and Workload Identity (one-time per cluster)
+                
+                export RESOURCE_GROUP=demo.octopus.app
+                export CLUSTER=demo-octopus-app-aks-main
+                export APP_CONFIG_NAME=demo-octopus-app
+                export KEY_VAULT_NAME=demo-octopus-app
+                export IDENTITY_NAME=$OctopusParameters["ProcessTemplate.Azure.IdentityName"]
+                export LOCATION=westus2
+                export NAMESPACE=$OctopusParameters["ProcessTemplate.Kubernetes.Namespace"]
+                export SERVICE_ACCOUNT=$OctopusParameters["ProcessTemplate.Kubernetes.ServiceAccount"]
+                
+                #az aks update \
+                #  --resource-group $RESOURCE_GROUP \
+                #  --name $CLUSTER \
+                #  --enable-oidc-issuer \
+                #  --enable-workload-identity > /dev/null
+                
+                # Get the OIDC issuer URL
+                OIDC_ISSUER=$(az aks show \
+                  --resource-group $RESOURCE_GROUP \
+                  --name $CLUSTER \
+                  --query "oidcIssuerProfile.issuerUrl" -o tsv)
+                
+                echo "oidc_issuer = $OIDC_ISSUER"
+                
+                ##
+                
+                az identity create \
+                  --name $IDENTITY_NAME \
+                  --resource-group $RESOURCE_GROUP \
+                  --location $LOCATION
+                
+                CLIENT_ID=$(az identity show \
+                  --name $IDENTITY_NAME \
+                  --resource-group $RESOURCE_GROUP \
+                  --query clientId -o tsv)
+                
+                PRINCIPAL_ID=$(az identity show \
+                  --name $IDENTITY_NAME \
+                  --resource-group $RESOURCE_GROUP \
+                  --query principalId -o tsv)
+                
+                ##
+                
+                KV_SCOPE=$(az keyvault show \
+                  --name $KEY_VAULT_NAME \
+                  --query id -o tsv)
+                
+                az role assignment create \
+                  --role "Key Vault Secrets User" \
+                  --assignee-object-id $PRINCIPAL_ID \
+                  --assignee-principal-type ServicePrincipal \
+                  --scope $KV_SCOPE
+                
+                APPCONFIG_ID=$(az appconfig show \
+                  --name $APPCONFIG_NAME \
+                  --query id -o tsv)
+                
+                # Grant "App Configuration Data Reader" role
+                az role assignment create \
+                  --role "App Configuration Data Reader" \
+                  --assignee-object-id $PRINCIPAL_ID \
+                  --assignee-principal-type ServicePrincipal \
+                  --scope $APPCONFIG_ID
+                
+                ##
+                
+                az identity federated-credential create \
+                  --name $NAMESPACE \
+                  --identity-name $IDENTITY_NAME \
+                  --resource-group $RESOURCE_GROUP \
+                  --issuer $OIDC_ISSUER \
+                  --subject "system:serviceaccount:${NAMESPACE}:${SERVICE_ACCOUNT}" \
+                  --audiences "api://AzureADTokenExchange"
+                
+                echo "✅ Use this Client ID in your ServiceAccount annotation: $CLIENT_ID"
+                echo ""
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
+    }
+}
