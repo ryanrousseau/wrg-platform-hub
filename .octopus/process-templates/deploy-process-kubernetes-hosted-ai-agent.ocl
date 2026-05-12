@@ -284,14 +284,14 @@ step "create-deployment" {
                               path: /health
                               port: http
                             initialDelaySeconds: 15
-                            periodSeconds: 60
+                            periodSeconds: 15
                           
                           readinessProbe:
                             httpGet:
                               path: /ready
                               port: http
                             initialDelaySeconds: 10
-                            periodSeconds: 10
+                            periodSeconds: 15
                           
                           startupProbe:
                             httpGet:
