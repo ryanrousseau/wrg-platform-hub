@@ -205,7 +205,7 @@ step "deploy-service-account" {
                 apiVersion: v1
                 kind: ServiceAccount
                 metadata:
-                  name: #{ProcessTemplate.Agent.Slug}
+                  name: #{Octopus.Space.Slug}
                   annotations:
                     # Link to Azure AD app/managed identity
                     azure.workload.identity/client-id: "#{ProcessTemplate.ServiceAccount.ClientId}"
