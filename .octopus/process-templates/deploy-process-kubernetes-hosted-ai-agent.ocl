@@ -249,7 +249,7 @@ step "create-deployment" {
                         app: #{ProcessTemplate.Agent.Slug}
                         azure.workload.identity/use: "true"  # ← REQUIRED for workload identity
                     spec:
-                      serviceAccountName: #{ProcessTemplate.Agent.Slug}
+                      serviceAccountName: #{Octopus.Space.Slug}
                       
                       securityContext:
                         runAsNonRoot: true
