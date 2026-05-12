@@ -170,21 +170,16 @@ step "deploy-configmap" {
                 metadata:
                   name: #{ProcessTemplate.Agent.Slug}-config
                 data:
-                data:
-                  USE_KEY_VAULT: "true"
-                  AZURE_KEY_VAULT_URL: "#{ProcessTemplate.Vault.Url}"
-                  LOG_LEVEL: "INFO"
+                  USE_APP_CONFIGURATION: "true"
+                  AZURE_APPCONFIG_ENDPOINT: "#{ProcessTemplate.AppConfiguration.Endpoint}"
+                  APPCONFIG_LABEL: "#{Octopus.Environment.Slug}"
+                  APPCONFIG_REFRESH_INTERVAL: "30"
                   
-                  # Caching
-                  CACHE_BACKEND: "redis"
-                  REDIS_URL: "redis://redis.#{ProcessTemplate.Agent.Namespace}.svc.cluster.local:6379/0"
-                  CACHE_TTL_GEOCODING: "86400"
-                  CACHE_TTL_CURRENT_WEATHER: "600"
-                  CACHE_TTL_FORECAST: "1800"
-                  CACHE_TTL_AGENT_RESPONSE: "300"
-                  ENABLE_TOOL_CACHE: "true"
-                  ENABLE_RESPONSE_CACHE: "true"
-                
+                  # Key Vault URL needed because App Config references point to it
+                  AZURE_KEY_VAULT_URL: "#{ProcessTemplate.Vault.Url}"
+                  USE_KEY_VAULT: "false"   # not used directly — App Config resolves KV refs
+                  
+                  PYTHONUNBUFFERED: "1"
                 EOT
             Octopus.Action.KubernetesContainers.Namespace = "#{ProcessTemplate.Agent.Namespace}"
             Octopus.Action.Script.ScriptSource = "Inline"
