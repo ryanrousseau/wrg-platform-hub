@@ -107,10 +107,6 @@ step "set-app-configuration" {
                 $label = $OctopusParameters["Octopus.Environment.Slug"]
                 $prefix = $OctopusParameters["ProcessTemplate.Agent.Slug"]
                 
-                foreach ($key in $OctopusParameters.Keys) {
-                  Write-Host "$key"
-                }
-                
                 # Set each configuration value
                 foreach ($variable in $OctopusParameters.Keys | Where-Object { $_.StartsWith("config:")}) {
                     $key = $variable -replace "^config", $prefix
