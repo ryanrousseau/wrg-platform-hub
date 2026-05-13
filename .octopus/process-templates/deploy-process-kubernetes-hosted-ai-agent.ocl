@@ -93,6 +93,14 @@ parameter "ProcessTemplate.Azure.Account" {
     value "demo-octopus-app-platform-hub" {}
 }
 
+parameter "ProcessTemplate.Worker.ContainerFeed" {
+    display_settings = {
+        Octopus.ControlType = "Feed"
+    }
+    help_text = ""
+    label = "Execution Container Feed"
+}
+
 step "set-app-configuration" {
     name = "Set app configuration"
 
@@ -100,6 +108,7 @@ step "set-app-configuration" {
         action_type = "Octopus.AzurePowerShell"
         properties = {
             Octopus.Action.Azure.AccountId = "#{ProcessTemplate.Azure.Account}"
+            Octopus.Action.RunOnServer = "true"
             Octopus.Action.Script.ScriptBody = <<-EOT
                 
                 $appConfigName = "demo-octopus-app"
@@ -137,6 +146,11 @@ step "set-app-configuration" {
             OctopusUseBundledTooling = "False"
         }
         worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
+
+        container {
+            feed = "#{ProcessTemplate.Worker.ContainerFeed}"
+            image = "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04"
+        }
     }
 }
 
