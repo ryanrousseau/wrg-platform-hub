@@ -75,6 +75,70 @@ parameter "ProcessTemplate.ServiceAccount.ClientId" {
     label = "Managed Service Account Client ID"
 }
 
+parameter "ProcessTemplate.Worker.Pool" {
+    display_settings = {
+        Octopus.ControlType = "WorkerPool"
+    }
+    help_text = ""
+    label = "Worker Pool"
+}
+
+parameter "ProcessTemplate.Azure.Account" {
+    display_settings = {
+        Octopus.ControlType = "AzureAccount"
+    }
+    help_text = ""
+    label = "Azure Account"
+
+    value "demo-octopus-app-platform-hub" {}
+}
+
+step "set-app-configuration" {
+    name = "Set app configuration"
+
+    action {
+        action_type = "Octopus.AzurePowerShell"
+        properties = {
+            Octopus.Action.Azure.AccountId = "#{ProcessTemplate.Azure.Account}"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                
+                $appConfigName = "demo-octopus-app"
+                $resourceGroup = "demo.octopus.app"
+                $label = $OctopusParameters["Octopus.Environment.Slug"]
+                $prefix = $OctopusParameters["ProcessTemplate.Agent.Slug"]
+                
+                # Set each configuration value
+                foreach ($variable in $OctopusParameters.Keys | Where-Object { $_.StartsWith("config:")}) {
+                    $key = $variable -replace "^config", $prefix
+                    $value = $OctopusParameters[$variable]
+                    try {
+                        $params = @{
+                            Endpoint    = "https://$AppConfigName.azconfig.io"
+                            Key         = $key
+                            Value       = $value
+                            ContentType = "text/plain"
+                        }
+                        
+                        if ($Label) {
+                            $params.Add('Label', $Label)
+                        }
+                        
+                        Set-AzAppConfigurationKeyValue @params | Out-Null
+                        Write-Host "✓ Set: $($setting.Key) = $($setting.Value)" -ForegroundColor Green
+                    }
+                    catch {
+                        Write-Host "✗ Failed to set: $($setting.Key) - $_" -ForegroundColor Red
+                    }
+                }
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "PowerShell"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = "#{ProcessTemplate.Worker.Pool}"
+    }
+}
+
 step "deploy-redis" {
     name = "Deploy redis"
     properties = {
