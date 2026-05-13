@@ -126,7 +126,8 @@ step "set-app-configuration" {
                         Set-AzAppConfigurationKeyValue @params | Out-Null
                         Write-Host "✓ Set: $key = $value" -ForegroundColor Green
                     }
-                    catch {
+                    catch ($ex) {
+                        Write-Verbose $ex
                         Write-Host "✗ Failed to set: $key" -ForegroundColor Red
                     }
                 }
