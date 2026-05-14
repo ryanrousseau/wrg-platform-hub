@@ -9,6 +9,16 @@ parameter "ProcessTemplate.Target.Tags" {
     label = "Target Tags"
 }
 
+parameter "ProcessTemplate.Prompt" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Test Prompt"
+
+    value "#{Runbook.TestAgent.Prompt}" {}
+}
+
 step "print-config" {
     name = "Print config"
     properties = {
