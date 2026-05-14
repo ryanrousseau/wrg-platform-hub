@@ -63,3 +63,11 @@ parameter "ProjectTemplate.Docker.Registry" {
 
     value "docker.io" {}
 }
+
+parameter "ProjectTemplate.ServiceAccount.ClientId" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Service Account Client ID"
+}
