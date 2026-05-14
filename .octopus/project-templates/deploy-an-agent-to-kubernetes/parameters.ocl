@@ -13,3 +13,53 @@ parameter "ProjectTemplate.Agent.Container" {
     help_text = ""
     label = "Agent Container"
 }
+
+parameter "ProjectTemplate.Docker.Account" {
+    display_settings = {
+        Octopus.ControlType = "UsernamePasswordAccount"
+    }
+    help_text = ""
+    label = "Docker Account"
+}
+
+parameter "ProjectTemplate.SBOM" {
+    display_settings = {
+        Octopus.ControlType = "Package"
+    }
+    help_text = ""
+    label = "SBOM"
+}
+
+parameter "ProjectTemplate.Git.AuthToken" {
+    display_settings = {
+        Octopus.ControlType = "Sensitive"
+    }
+    help_text = ""
+    label = "GitHub Auth Token"
+}
+
+parameter "ProjectTemplate.Worker.Pool" {
+    display_settings = {
+        Octopus.ControlType = "WorkerPool"
+    }
+    help_text = ""
+    label = "Worker Pool"
+}
+
+parameter "ProjectTemplate.ExecutionContainer.Feed" {
+    display_settings = {
+        Octopus.ControlType = "Feed"
+    }
+    help_text = ""
+    label = "Execution Container Feed"
+}
+
+parameter "ProjectTemplate.Docker.Registry" {
+    display_settings = {
+        Octopus.ControlType = "SingleLineText"
+    }
+    help_text = ""
+    label = "Docker Registry"
+
+    value "docker.io" {}
+}
