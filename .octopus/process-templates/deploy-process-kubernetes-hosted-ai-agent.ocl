@@ -444,6 +444,7 @@ step "create-service" {
     properties = {
         Octopus.Action.TargetRoles = "#{ProcessTemplate.TargetTags}"
     }
+    start_trigger = "StartWithPrevious"
 
     action "deploy-service" {
         action_type = "Octopus.KubernetesDeployRawYaml"
