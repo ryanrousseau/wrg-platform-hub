@@ -2,12 +2,32 @@ process_template "verify-artifacts" {
     name = "Verify artifacts"
     process_template_slug = "deploy-process-verify-build-artifacts"
     version_mask = "9.X"
+
+    parameter "Template.Docker.Account" {
+        value = "#{ProjectTemplate.Docker.Account}"
+    }
+
+    parameter "Template.SBOM.Artifact" {
+        value = "ProjectTemplate.SBOM"
+    }
+
+    parameter "Template.Git.AuthToken" {
+        value = "#{ProjectTemplate.Git.AuthToken}"
+    }
+
+    parameter "Template.Verify.WorkerPool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+
+    parameter "Template.Verify.ExecutionContainerFeed" {
+        value = "#{ProjectTemplate.ExecutionContainer.Feed}"
+    }
 }
 
 process_template "deploy-the-agent" {
     name = "Deploy the agent"
     process_template_slug = "deploy-process-kubernetes-hosted-ai-agent"
-    version_mask = "1.X"
+    version_mask = "5.X"
 
     parameter "ProcessTemplate.TargetTags" {
         value = "#{ProjectTemplate.TargetTags}"
@@ -15,5 +35,13 @@ process_template "deploy-the-agent" {
 
     parameter "ProcessTemplate.Agent.Container" {
         value = "ProjectTemplate.Agent.Container"
+    }
+
+    parameter "ProcessTemplate.Worker.Pool" {
+        value = "#{ProjectTemplate.Worker.Pool}"
+    }
+
+    parameter "ProcessTemplate.Worker.ContainerFeed" {
+        value = "#{ProjectTemplate.ExecutionContainer.Feed}"
     }
 }
