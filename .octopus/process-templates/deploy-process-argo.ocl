@@ -1,2 +1,53 @@
 name = "Deploy Process - Argo"
 description = ""
+
+parameter "ProcessTemplate.App.Container" {
+    display_settings = {
+        Octopus.ControlType = "Package"
+    }
+    help_text = ""
+    label = "App Container"
+}
+
+step "update-argo-cd-application-manifests" {
+    name = "Update Argo CD Application Manifests"
+
+    action {
+        action_type = "Octopus.ArgoCDUpdateManifests"
+        properties = {
+            Octopus.Action.ArgoCD.CommitMessageDescription = <<-EOT
+                Project: #{Octopus.Project.Slug}
+                Environment: #{Octopus.Environment.Slug}#{if Octopus.Deployment.Tenant.Slug }
+                Tenant: #{Octopus.Deployment.Tenant.Slug}#{/if}
+                EOT
+            Octopus.Action.ArgoCD.CommitMessageSummary = "Updated by Octopus Release - #{Octopus.Release.Number}"
+            Octopus.Action.ArgoCD.CommitMethod = "DirectCommit"
+            Octopus.Action.ArgoCD.InputPath = "templates/demo-app"
+            Octopus.Action.ArgoCD.StepVerification.Method = "ArgoCDApplicationHealthy"
+            Octopus.Action.ArgoCD.StepVerification.Timeout = "180"
+            Octopus.Action.ArgoCD.Sync.Mode = "AllEnvironments"
+            Octopus.Action.GitRepository.Source = "External"
+            Octopus.Action.Script.ScriptSource = "GitRepository"
+        }
+        worker_pool_variable = ""
+
+        git_dependencies {
+            default_branch = "main"
+            file_path_filters = ["templates/demo-app", "templates/demo-app/**/*"]
+            git_credential_id = "GitCredentials-2"
+            git_credential_type = "Library"
+            repository_uri = "https://github.com/OctopusSolutionsEngineering/demo-app-argo-templates.git"
+        }
+
+        packages "app-container" {
+            acquisition_location = "NotAcquired"
+            package_id = ""
+            properties = {
+                Extract = "false"
+                PackageParameterName = "ProcessTemplate.App.Container"
+                Purpose = "DockerImageReference"
+                SelectionMode = "deferred"
+            }
+        }
+    }
+}
