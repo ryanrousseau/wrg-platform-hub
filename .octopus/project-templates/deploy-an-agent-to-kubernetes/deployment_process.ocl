@@ -1,3 +1,9 @@
+process_template "verify-artifacts" {
+    name = "Verify artifacts"
+    process_template_slug = "deploy-process-verify-build-artifacts"
+    version_mask = "9.X"
+}
+
 process_template "deploy-the-agent" {
     name = "Deploy the agent"
     process_template_slug = "deploy-process-kubernetes-hosted-ai-agent"
