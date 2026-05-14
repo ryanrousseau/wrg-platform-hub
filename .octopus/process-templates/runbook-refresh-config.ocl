@@ -1,0 +1,48 @@
+name = "Runbook - Refresh Config"
+description = ""
+
+parameter "ProcessTemplate.Target.Tags" {
+    display_settings = {
+        Octopus.ControlType = "TargetTags"
+    }
+    help_text = ""
+    label = "Target Tags"
+}
+
+step "refresh-config" {
+    name = "Refresh config"
+    properties = {
+        Octopus.Action.TargetRoles = "#{ProcessTemplate.Target.Tags}"
+    }
+    start_trigger = "StartWithPrevious"
+
+    action {
+        action_type = "Octopus.Script"
+        properties = {
+            Octopus.Action.RunOnServer = "false"
+            Octopus.Action.Script.ScriptBody = <<-EOT
+                # Simple client for the Weather Agent API
+                
+                set -euo pipefail
+                
+                PROJECT=$(get_octopusvariable "Octopus.Project.Slug")
+                ENVIRONMENT=$(get_octopusvariable "Octopus.Environment.Slug")
+                
+                BASE_URL="http://$PROJECT.$PROJECT-$ENVIRONMENT.svc.cluster.local:8000"
+                QUERY=$(get_octopusvariable "ProcessTemplate.Prompt")
+                
+                response=$(curl -sS -X POST "$BASE_URL/config/refresh" --max-time 120)
+                
+                answer=$(echo "$response" | jq -r '.')
+                
+                echo ""
+                echo "🤖 Agent: $answer"
+                echo ""
+                EOT
+            Octopus.Action.Script.ScriptSource = "Inline"
+            Octopus.Action.Script.Syntax = "Bash"
+            OctopusUseBundledTooling = "False"
+        }
+        worker_pool_variable = ""
+    }
+}
