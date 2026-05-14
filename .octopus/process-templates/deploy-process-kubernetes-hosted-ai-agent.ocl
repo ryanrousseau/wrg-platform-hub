@@ -140,6 +140,31 @@ step "set-app-configuration" {
                         Write-Verbose $_
                     }
                 }
+                
+                # Set each configuration value
+                foreach ($variable in $OctopusParameters.Keys | Where-Object { $_.StartsWith("secret:")}) {
+                    $key = $variable -replace "^secret", $prefix
+                    $value = $OctopusParameters[$variable]
+                    try {
+                        $params = @{
+                            Endpoint    = "https://$appConfigName.azconfig.io"
+                            Key         = $key
+                            Value       = (@{ uri = $value } | ConvertTo-Json -Compress)
+                            ContentType = "application/vnd.microsoft.appconfig.keyvaultref+json;charset=utf-8"
+                        }
+                        
+                        if ($Label) {
+                            $params.Add('Label', $label)
+                        }
+                        
+                        Set-AzAppConfigurationKeyValue @params | Out-Null
+                        Write-Host "✓ Set: $key = $value" -ForegroundColor Green
+                    }
+                    catch {
+                        Write-Host "✗ Failed to set: $key" -ForegroundColor Red
+                        Write-Verbose $_
+                    }
+                }
                 EOT
             Octopus.Action.Script.ScriptSource = "Inline"
             Octopus.Action.Script.Syntax = "PowerShell"
