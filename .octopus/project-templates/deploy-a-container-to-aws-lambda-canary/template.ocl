@@ -1,0 +1,7 @@
+name = "Deploy a Container to AWS Lambda using Canary"
+description = "Deploys to AWS Lambda using a Canary deployment pattern."
+
+icon {
+    color = "#FF9900"
+    id = "aws"
+}
